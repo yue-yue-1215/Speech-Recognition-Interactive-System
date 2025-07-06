@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>语音交互系统</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Vue.js CDN -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <!-- Howler.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
+    <!-- Axios CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .dark {
+            background-color: #1f2937;
+            color: #f3f4f6;
+        }
+        .light {
+            background-color: #f3f4f6;
+            color: #1f2937;
+        }
+        .recording {
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="light min-h-screen flex flex-col items-center p-4">
+    <div id="app" class="w-full max-w-3xl">
+        <!-- 标题和主题切换 -->
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold">语音交互系统</h1>
+            <button @click="toggleTheme" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700">
+                <span v-if="isDark">🌞</span>
+                <span v-else>🌙</span>
+            </button>
+        </div>
+
+        <!-- 录音控制 -->
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-6">
+            <h2 class="text-xl font-semibold mb-4">录音控制</h2>
+            <div class="flex items-center space-x-4">
+                <button @click="toggleRecording"
+                        :class="['px-6 py-3 rounded-full text-white font-semibold', isRecording ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600', isRecording ? 'recording' : '']">
+                    {{ isRecording ? '停止录音' : '开始录音' }}
+                </button>
+                <span class="text-lg">{{ status }}</span>
+            </div>
+        </div>
+
+        <!-- 实时结果 -->
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-6">
+            <h2 class="text-xl font-semibold mb-4">实时结果</h2>
+            <div class="space-y-4">
+                <p><strong>语音识别结果：</strong>{{ asrResult }}</p>
+                <p><strong>模型回答：</strong>{{ llmReply }}</p>
+                <p><strong>检测语言：</strong>{{ language }}</p>
+                <p><strong>TTS文件：</strong>
+                    <a v-if="ttsFile" :href="ttsFile" class="text-blue-500 hover:underline">{{ ttsFile }}</a>
+                    <span v-else>无</span>
+                    <button v-if="ttsFile" @click="playAudio(ttsFile)" class="ml-2 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">播放</button>
+                </p>
+            </div>
+        </div>
+
+        <!-- 日志查看 -->
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-semibold mb-4">日志记录</h2>
+            <div class="space-y-2 max-h-64 overflow-y-auto">
+                <div v-for="log in logs" :key="log.timestamp" class="p-3 bg-gray-100 dark:bg-gray-700 rounded">
+                    <p><strong>时间：</strong>{{ log.timestamp }}</p>
+                    <p><strong>识别文本：</strong>{{ log.recognized_text }}</p>
+                    <p><strong>回答：</strong>{{ log.llm_reply }}</p>
+                    <p><strong>语言：</strong>{{ log.language }}</p>
+                    <p><strong>TTS文件：</strong>{{ log.tts_file }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    isRecording: false,
+                    status: '待机中',
+                    asrResult: '',
+                    llmReply: '',
+                    language: '',
+                    ttsFile: '',
+                    logs: [],
+                    isDark: false,
+                    ws: null,
+                    sound: null
+                };
+            },
+            methods: {
+                toggleTheme() {
+                    this.isDark = !this.isDark;
+                    document.body.classList.toggle('dark', this.isDark);
+                    document.body.classList.toggle('light', !this.isDark);
+                },
+                toggleRecording() {
+                    this.isRecording = !this.isRecording;
+                    this.status = this.isRecording ? '正在录音...' : '待机中';
+                    // 通过WebSocket发送录音控制指令
+                    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                        this.ws.send(JSON.stringify({
+                            type: 'control',
+                            action: this.isRecording ? 'start' : 'stop'
+                        }));
+                    }
+                },
+                playAudio(file) {
+                    if (this.sound) {
+                        this.sound.stop();
+                    }
+                    this.sound = new Howl({
+                        src: [file],
+                        format: ['mp3']
+                    });
+                    this.sound.play();
+                },
+                fetchLogs() {
+                    axios.get('http://localhost:8000/logs')
+                        .then(response => {
+                            this.logs = response.data;
+                        })
+                        .catch(error => {
+                            console.error('获取日志失败:', error);
+                        });
+                },
+                connectWebSocket() {
+                    this.ws = new WebSocket('ws://localhost:8765');
+                    this.ws.onopen = () => {
+                        console.log('WebSocket连接成功');
+                    };
+                    this.ws.onmessage = (event) => {
+                        const data = JSON.parse(event.data);
+                        if (data.type === 'status') {
+                            this.status = data.message;
+                        } else if (data.type === 'result') {
+                            this.asrResult = data.asr_result;
+                            this.llmReply = data.llm_reply;
+                            this.language = data.language;
+                            this.ttsFile = data.tts_file;
+                            this.fetchLogs(); // 新结果到达时刷新日志
+                        }
+                    };
+                    this.ws.onclose = () => {
+                        console.log('WebSocket断开，尝试重连...');
+                        setTimeout(() => this.connectWebSocket(), 3000);
+                    };
+                    this.ws.onerror = (error) => {
+                        console.error('WebSocket错误:', error);
+                    };
+                }
+            },
+            mounted() {
+                this.connectWebSocket();
+                this.fetchLogs();
+                // 每10秒轮询日志
+                setInterval(() => this.fetchLogs(), 10000);
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

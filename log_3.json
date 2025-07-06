@@ -1,0 +1,9 @@
+{
+  "timestamp": "2025-06-15 15:12:53",
+  "audio_file": "d:\\1\\lab_final\\audio_3.wav",
+  "recognized_text": "用英语介绍一下你自己，回答简短一些，保持50字以内！",
+  "llm_reply": "Hello! I'm Kai, a 18-year-old college student. I love learning new things and having fun with friends. What about you?",
+  "language": "en",
+  "tts_voice": "en-US-AnaNeural",
+  "tts_file": "d:\\1\\lab_final\\sft_3.mp3"
+}

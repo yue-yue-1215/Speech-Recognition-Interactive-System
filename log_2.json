@@ -1,0 +1,9 @@
+{
+  "timestamp": "2025-06-15 15:12:22",
+  "audio_file": "d:\\1\\lab_final\\audio_1.wav",
+  "recognized_text": "你好请向我们介绍上海周末适合出游的好用，回答简短一些，保持50字以内！",
+  "llm_reply": "周末去上海可以试试外滩看夜景、迪士尼乐园游玩或者逛徐家汇。推荐租一辆自行车在城市中骑行，体验不一样的都市风情。",
+  "language": "zh",
+  "tts_voice": "zh-CN-XiaoyiNeural",
+  "tts_file": "d:\\1\\lab_final\\sft_1.mp3"
+}

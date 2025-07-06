@@ -1,0 +1,9 @@
+{
+  "timestamp": "2025-06-15 15:01:25",
+  "audio_file": "d:\\1\\lab_final\\audio_4.wav",
+  "recognized_text": "，回答简短一些，保持50字以内！",
+  "llm_reply": "嗯，你好呀。有什么能帮到你的吗？",
+  "language": "zh",
+  "tts_voice": "zh-CN-XiaoyiNeural",
+  "tts_file": "d:\\1\\lab_final\\sft_4.mp3"
+}

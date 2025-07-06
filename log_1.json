@@ -1,0 +1,9 @@
+{
+  "timestamp": "2025-06-15 15:15:59",
+  "audio_file": "d:\\1\\lab_final\\audio_1.wav",
+  "recognized_text": "你好向我们介绍上海周末出游的好去处，回答简短一些，保持50字以内！",
+  "llm_reply": "上海有很多好玩的地方，比如外滩、豫园、城隍庙和迪士尼乐园。你可以根据自己的兴趣选择适合的地点哦！",
+  "language": "zh",
+  "tts_voice": "zh-CN-XiaoyiNeural",
+  "tts_file": "d:\\1\\lab_final\\sft_1.mp3"
+}
